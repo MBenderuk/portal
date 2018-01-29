@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import bottle, mysql.connector
+import bottle, mysql.connector, uuid
 bottle.TEMPLATES.clear()
 
 app = bottle.app()
@@ -117,6 +117,15 @@ def login_validation(login, password):
         return (False)
     cursor.close()
     connection.close()
+
+def create_session(user_id):
+    connection, cursor = connect_to_mysql()
+    session_key = str(uuid.uuid4())
+    cursor.execute("INSERT INTO sessions (user_id, session_key) VALUES (\"%s\", \"%s\")" % user_id, session_key))
+    connection.commit()
+    cursor.close()
+    connection.close()
+    return session_key
 
 ### Custom functions --- END ###
 
