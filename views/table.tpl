@@ -17,10 +17,10 @@
     <div class="container">
       <div class="row">
            <div class="col-sm-1 pull-right">
-                <a href="/logout/someuser" class="btn pull-right" role="button">Logout</a>
+                <a href="/logout/{{user_id}}" class="btn pull-right" role="button">Logout</a>
            </div>
            <div class="col-sm-3 pull-right">
-                <h5>You are logged in as: some_user </h5>
+                <h4>You are logged in as: {{user_name}} </h4>
            </div>
       </div>
       <h3>List of users:</h3>
@@ -39,10 +39,14 @@
             %for col in line:
                 <td>{{col}}</td>
             %end
-                <td>
-                     <a href="/modify/{{line[0]}}" class="btn btn-warning" role="button">Modify user</a>
-                     <a href="/delete/{{line[0]}}" class="btn btn-danger" role="button">Delete user</a>
-                </td>
+                    <td>
+                         %if is_admin == 1:
+                             <a href="/modify/{{line[0]}}" class="btn btn-warning" role="button">Modify user</a>
+                             <a href="/delete/{{line[0]}}" class="btn btn-danger" role="button">Delete user</a>
+                         %elif user_id == line[0]:
+                             <a href="/modify/{{line[0]}}" class="btn btn-warning" role="button">Modify user</a>
+                         %end
+                    </td>
         </tr>
       %end
       <tfoot>
