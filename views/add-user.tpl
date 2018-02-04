@@ -31,6 +31,15 @@
               <input name="new-user-password" type="text" id="inputPassword" class="form-control" placeholder="Enter password for new user here" required>
            </div>
         </div>
+        <div class="form-group">        
+            <div class="col-sm-offset-2 col-sm-10">
+                <div class="checkbox">
+                    <label><input name="new-user-is-admin" type="checkbox" >Admin privileges</label>
+                </div>
+            </div>
+        </div>
+      </div>
+    </div>
         <div class="form-group">
            <div class="col-sm-offset-2 col-sm-10">
               <button class="btn btn-default" type="submit">Submit</button>
