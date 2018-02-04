@@ -3,96 +3,147 @@ import bottle, mysql.connector, uuid
 bottle.TEMPLATES.clear()
 
 app = bottle.app()
+cookie_name="session_id"
+user_login=""
 
 ### Routes --- BEGIN ###
 @app.route('/')
 def login():
-    return bottle.template('login.tpl')
+    offered_session_key=bottle.request.get_cookie(cookie_name)
+    if check_session(offered_session_key) is True:
+        return bottle.redirect('/table')
+    else:
+        return bottle.template('login.tpl')
 
 @app.route('/', method="POST")
 def login_handler():
     login = bottle.request.forms.get('login')
     password = bottle.request.forms.get('password')
-   
+       
     if login_validation(login, password) is True:
+        global user_login
+        user_login=login
+        connection, cursor = connect_to_mysql()
+        cursor.execute("SELECT no FROM users WHERE login=\"%s\"" % login)
+        for row in cursor:
+            select_user_id_result=row[0]
+        cursor.close()
+        connection.close()
+        bottle.response.set_cookie(cookie_name, create_session(select_user_id_result), max_age=300)
 	return bottle.redirect('/table')
     else:
         return bottle.template('bad-credentials.tpl')
 
 @app.route('/table')
 def table():
-    connection, cursor = connect_to_mysql()
-    select_query = ("SELECT no, reg_date, login FROM users")
-    cursor.execute(select_query)
-    table_content=cursor.fetchall()
-    cursor.close()
-    connection.close()
-    return bottle.template('table.tpl', table=table_content)
+    offered_session_key=bottle.request.get_cookie(cookie_name)
+    if check_session(offered_session_key) is True:
+        global user_login
+        login=user_login
+        connection, cursor = connect_to_mysql()
+        cursor.execute("SELECT no FROM users WHERE login=\"%s\"" % login)
+        user_id=cursor.fetchone()
+        cursor.execute("SELECT is_admin FROM users WHERE login=\"%s\"" % login)
+        admin=cursor.fetchone()
+        cursor.execute("SELECT no, reg_date, login FROM users")
+        table_content=cursor.fetchall()
+        cursor.close()
+        connection.close()
+        return bottle.template('table.tpl', user_name=login, user_id=user_id[0], table=table_content, is_admin=admin[0])
+    else:
+        return bottle.template('login-required.tpl')
 
 @app.route('/add')
 def add_new_user_form():
-    return bottle.template('add-user.tpl')
+    offered_session_key=bottle.request.get_cookie(cookie_name)
+    if check_session(offered_session_key) is True:
+        return bottle.template('add-user.tpl')
+    else:
+        return bottle.template('login-required.tpl')
 
 @app.route('/add', method="POST")
 def add_new_user():
-    new_user_login = bottle.request.forms.get('new-user-login')
-    new_user_password = bottle.request.forms.get('new-user-password')
-    
-    add_new_user(new_user_login, new_user_password)
-    
-    return bottle.template('user-successfully-added.tpl')
+    offered_session_key=bottle.request.get_cookie(cookie_name)
+    if check_session(offered_session_key) is True:
+        new_user_login = bottle.request.forms.get('new-user-login')
+        new_user_password = bottle.request.forms.get('new-user-password')
+        if bottle.request.forms.get('new-user-is-admin') == 'on':
+            new_user_is_admin = 1
+        else: new_user_is_admin = 0
+        add_new_user(new_user_login, new_user_password, new_user_is_admin)
+        return bottle.template('user-successfully-added.tpl')
+    else:
+        return bottle.template('login-required.tpl')
 
 @app.route('/delete/<user_id:int>')
 def delete_user(user_id):
-    connection, cursor = connect_to_mysql()
-    delete_query=("DELETE FROM users WHERE no = \"%s\"" % user_id)
-    cursor.execute(delete_query)
-    connection.commit()
-    cursor.close()
-    connection.close()
-    return bottle.redirect('/table')
-
-@app.route('/modify/<user_id:int>')
-@app.route('/modify/<user_id:int>', method="POST")
-def modify_user_form(user_id):
-    connection, cursor = connect_to_mysql()
-    if  bottle.request.method == "POST":
-        print(user_id)
-        modified_user_login = bottle.request.forms.get('user-login')
-        print(modified_user_login)
-        modified_user_password = bottle.request.forms.get('user-password')
-        print(modified_user_password)
-        modify_login_query = ("UPDATE users SET login=\"%s\" WHERE no=\"%s\"" % (modified_user_login, user_id))
-        cursor.execute(modify_login_query)
-        connection.commit()
-        modify_password_query = ("UPDATE users SET password=\"%s\" WHERE no=\"%s\"" % (modified_user_password, user_id))
-        cursor.execute(modify_password_query)
+    offered_session_key=bottle.request.get_cookie(cookie_name)
+    if check_session(offered_session_key) is True:
+        connection, cursor = connect_to_mysql()
+        cursor.execute("DELETE FROM users WHERE no = \"%s\"" % user_id)
         connection.commit()
         cursor.close()
         connection.close()
         return bottle.redirect('/table')
     else:
-        select_login_guery = ("SELECT login FROM users WHERE no=\"%s\"" % user_id)
-        cursor.execute(select_login_guery)
-        for row in cursor:
-            select_login_guery_result=row[0]
-        select_password_guery = ("SELECT password FROM users WHERE no=\"%s\"" % user_id)
-        cursor.execute(select_password_guery)
-        for row in cursor:
-            select_password_guery_result=row[0]
+        return bottle.template('login-required.tpl')
+
+@app.route('/modify/<user_id:int>')
+@app.route('/modify/<user_id:int>', method="POST")
+def modify_user_form(user_id):
+    offered_session_key=bottle.request.get_cookie(cookie_name)
+    if check_session(offered_session_key) is True:
+        connection, cursor = connect_to_mysql()
+        cursor.execute("SELECT is_admin FROM users WHERE no=\"%s\"" % user_id)
+        admin=cursor.fetchone()
+        if  bottle.request.method == "POST":
+            modified_user_login = bottle.request.forms.get('user-login')
+            modified_user_password = bottle.request.forms.get('user-password')
+            if bottle.request.forms.get('user-is-admin') == 'on':
+                modified_is_admin = 1
+            else: modified_is_admin = 0
+            cursor.execute("UPDATE users SET login=\"%s\", password=\"%s\", is_admin=\"%s\" WHERE no=\"%s\"" % (modified_user_login, modified_user_password, modified_is_admin, user_id))
+            connection.commit()
+            cursor.close()
+            connection.close()
+            return bottle.redirect('/table')
+        else:
+            select_login_guery = ("SELECT login FROM users WHERE no=\"%s\"" % user_id)
+            cursor.execute(select_login_guery)
+            for row in cursor:
+                select_login_guery_result=row[0]
+            select_password_guery = ("SELECT password FROM users WHERE no=\"%s\"" % user_id)
+            cursor.execute(select_password_guery)
+            for row in cursor:
+                select_password_guery_result=row[0]
+            cursor.close()
+            connection.close()
+            return bottle.template('modify-user.tpl', user_id=user_id, user_login=select_login_guery_result, user_password=select_password_guery_result, is_admin=admin[0])
+    else:
+        return bottle.template('login-required.tpl')
+
+@app.route('/logout/<user_id:int>')
+def logout_user(user_id):
+    offered_session_key=bottle.request.get_cookie(cookie_name)
+    if check_session(offered_session_key) is True:
+        connection, cursor = connect_to_mysql()
+        cursor.execute("DELETE FROM sessions WHERE user_id = \"%s\"" % user_id)
+        connection.commit()
         cursor.close()
         connection.close()
-        return bottle.template('modify-user.tpl', user_id=user_id, user_login=select_login_guery_result, user_password=select_password_guery_result)
+        return bottle.redirect('/')
+    else:
+        return bottle.template('login-required.tpl')
 
 ### Routes --- END ###
 
 ### Custom functions --- BEGIN ###
 
-def add_new_user(new_user_login, new_user_password):
+def add_new_user(new_user_login, new_user_password, new_user_is_admin):
     connection, cursor = connect_to_mysql()
-    new_user_credentials=(new_user_login, new_user_password)
-    insert_query=("INSERT INTO users (reg_date, login, password) "
-                  "VALUES (now(), \"%s\", \"%s\")" % new_user_credentials)
+    new_user_credentials=(new_user_login, new_user_password, new_user_is_admin)
+    insert_query=("INSERT INTO users (reg_date, login, password, is_admin) "
+                  "VALUES (now(), \"%s\", \"%s\", \"%s\")" % new_user_credentials)
     cursor.execute(insert_query)
     connection.commit()
     cursor.close()
@@ -121,11 +172,31 @@ def login_validation(login, password):
 def create_session(user_id):
     connection, cursor = connect_to_mysql()
     session_key = str(uuid.uuid4())
-    cursor.execute("INSERT INTO sessions (user_id, session_key) VALUES (\"%s\", \"%s\")" % user_id, session_key))
+    cursor.execute("INSERT INTO sessions (user_id, session_key) VALUES (\"%s\", \"%s\")" % (user_id, session_key))
     connection.commit()
     cursor.close()
     connection.close()
     return session_key
+
+def delete_session(user_id):
+    connection, cursor = connect_to_mysql()
+    cursor.execute("DELETE FROM sessions WHERE user_id=\"%s\"" % user_id)
+    connection.commit()
+    cursor.close()
+    connection.close()
+
+def check_session(offered_session_key):
+    connection, cursor = connect_to_mysql()
+    cursor.execute("SELECT user_id, session_key FROM sessions WHERE session_key=\"%s\"" % offered_session_key)
+    real_session_key=0
+    for row in cursor:
+        real_session_key=row[1]
+    cursor.close()
+    connection.close()
+    if (offered_session_key == real_session_key):
+        return (True)
+    else:
+        return (False)
 
 ### Custom functions --- END ###
 
