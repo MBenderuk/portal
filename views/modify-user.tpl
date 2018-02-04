@@ -31,6 +31,13 @@
               <input name="user-password" type="text" id="inputPassword" class="form-control" value={{user_password}} required>
            </div>
         </div>
+            <div class="form-group">
+                <div class="col-sm-offset-2 col-sm-10">
+                     <div class="checkbox">
+	             <label><input name="user-is-admin" type="checkbox" {{'checked="checked"' if is_admin == 1 else ""}}>Admin privileges</label>
+                     </div>
+                </div>
+            </div>
         <div class="form-group">
            <div class="col-sm-offset-2 col-sm-10">
               <button class="btn btn-default" type="submit">Submit</button>
