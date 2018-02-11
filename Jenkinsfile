@@ -5,7 +5,6 @@ pipeline {
     stages {
             stage('Pull latest changes from GitHub') {
                steps {
-                    checkout scm
                      }
             }
             stage('Stop Portal on node A') {
