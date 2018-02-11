@@ -6,15 +6,25 @@ pipeline {
             stage('step 1') {
                steps {
                     sh 'pwd'
-                    sh 'ls -l'
                      }
             }
             stage('step 2') {
             steps {
-                    sh 'cd ~'
-                    sh 'pwd'
+                    sh 'ls -l'
                   }
 
-        }
+            }
+            stage('step 3') {
+            steps {
+                    sh 'cd ~'
+                  }
+
+            }
+            stage('step 4') {
+            steps {
+                    sh 'ls -l'
+                  }
+
+            }
     }
 }
