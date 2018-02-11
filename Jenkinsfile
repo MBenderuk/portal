@@ -14,8 +14,6 @@ pipeline {
                        sh 'ssh max@10.62.10.199 service portal stop'
                    }  
                   }
-
             }
-            }
-    }
+     }
 }
