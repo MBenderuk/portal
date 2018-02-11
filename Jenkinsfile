@@ -3,28 +3,19 @@
 pipeline {
     agent any
     stages {
-            stage('step 1') {
+            stage('Pull latest changes from GitHub') {
                steps {
-                    sh 'pwd'
+                    checkout scm
                      }
             }
-            stage('step 2') {
+            stage('Stop Portal on node A') {
             steps {
-                    sh 'ls -l'
+                   sshagent (credentials: ['max']) {
+                       sh 'ssh max@10.62.10.199 service portal stop'
+                   }  
                   }
 
             }
-            stage('step 3') {
-            steps {
-                    sh 'cd ~'
-                  }
-
-            }
-            stage('step 4') {
-            steps {
-                    sh 'ls -l'
-                  }
-
             }
     }
 }
