@@ -3,15 +3,16 @@
 pipeline {
     agent any
     stages {
-            stage('Stop Portal service on node A') {
+            stage('step 1') {
                steps {
-                    sh 'ssh max@10.62.10.199 sudo service portal stop'
-                    sleep 60
+                    sh 'pwd'
+                    sh 'ls -l'
                      }
             }
-            stage('Start Portal service on node A') {
+            stage('step 2') {
             steps {
-                    sh 'ssh max@10.62.10.199 sudo service portal stop'
+                    sh 'cd ~'
+                    sh 'pwd'
                   }
 
         }
