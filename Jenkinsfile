@@ -1,14 +1,16 @@
 pipeline {
-    agent { docker 'python:3.5.1' }
+    agent any
     stages {
-            stage('Build') {
+            stage('Stop Portal service on node A') {
             steps {
-                sh 'echo "Hello World"'
-                sh '''
-                    echo "Multiline shell steps works too"
-                    ls -lah
-                '''
+                    ssh max@A 'sudo service portal stop'
+                    sleep 60
             }
+            stage('Start Portal service on node A') {
+            steps {
+                    ssh max@A 'sudo service portal stop'
+            }
+
         }
     }
 }
