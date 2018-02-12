@@ -8,10 +8,9 @@ pipeline {
                      checkout scm
                      }
             }
-            stage('Stop Portal on node A') {
+            stage('Stop Portal on node B') {
             steps {
-                   sshagent (credentials: ['Jenkins']) {
-                       sh 'ssh max@10.62.10.199 service portal stop'
+                    ansiblePlaybook credentialsId: 'fdd41336-1877-48b6-93d2-ec22290f0f26', inventory: '~/ansible/hosts', playbook: 'stop_portal.yml'
                    }  
                   }
             }
