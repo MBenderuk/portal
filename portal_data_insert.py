@@ -1,10 +1,8 @@
 import mysql.connector
 from mysql.connector import errorcode
 
-DB_NAME = 'portalDB'
-
 users = (
-    "CREATE TABLE `users` ("
+    "CREATE TABLE IF NOT EXISTS `users` ("
     "  `no` int(10) NOT NULL AUTO_INCREMENT,"
     "  `reg_date` datetime NOT NULL,"
     "  `login` varchar(20) NOT NULL,"
@@ -12,6 +10,11 @@ users = (
     "  `is_admin` boolean NOT NULL default 0,"
     "  PRIMARY KEY (`no`)"
     ") ENGINE=InnoDB"
+)
+sessions = ( 
+    "CREATE TABLE IF NOT EXISTS `sessions` ("
+    "  `user_id` int(10) NOT NULL,"
+    "  `session_key` varchar(255) NOT NULL) ENGINE=InnoDB"
 )
 
 insert_query = "insert into users (reg_date, login, password, is_admin) " \
@@ -39,7 +42,8 @@ except mysql.connector.Error as err:
 else:
     print("Connection works good! ^^")
     cursor.execute(users)
-    cursor.executemany(insert_query, insert_data)
+    cursor.execute(sessions)
+    #cursor.executemany(insert_query, insert_data)
     print('Data insertion was successful! ^^')
     connection.commit()
 finally:
