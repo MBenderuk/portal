@@ -10,7 +10,7 @@ pipeline {
             }
             stage('Stop Portal on node B') {
               steps {
-                    ansiblePlaybook credentialsId: 'fdd41336-1877-48b6-93d2-ec22290f0f26', inventory: '/etc/ansible/hosts', playbook: '~/ansible/playbooks/stop_portal.yml'
+                    ansiblePlaybook credentialsId: 'fdd41336-1877-48b6-93d2-ec22290f0f26', inventory: '/etc/ansible/hosts', playbook: './ansible/playbooks/stop_portal.yml'
                    }  
                     }
             }
