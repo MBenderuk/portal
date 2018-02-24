@@ -236,7 +236,7 @@ def js(filepath):
 ### Start the Bottle webapp ###
 def main():
     
-    bottle.debug(True)
+    #bottle.debug(True)
     bottle.run(app=app, host='0.0.0.0', port=8080, reloader=True)
 
 if __name__ == "__main__":
