@@ -29,7 +29,7 @@ def login_handler():
             select_user_id_result=row[0]
         cursor.close()
         connection.close()
-        bottle.response.set_cookie(cookie_name, create_session(select_user_id_result), max_age=366666600)
+        bottle.response.set_cookie(cookie_name, create_session(select_user_id_result), max_age=3600)
 	return bottle.redirect('/table')
     else:
         return bottle.template('bad-credentials.tpl')
